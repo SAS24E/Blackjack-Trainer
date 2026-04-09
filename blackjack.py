@@ -1,5 +1,4 @@
 from deck import Deck
-from display import Display
 from hand import Hand
 
 
@@ -123,21 +122,22 @@ class BlackjackGame:
         self.display.print_colored(message, color, bold=True)
         self.display.print_divider()
 
-    def play_game(self):
-        """Play one round of blackjack."""
+    def start_round(self):
+        """Prepare the game state for a new round."""
         self.reshuffle_if_needed()
         self.reset_hands()
 
+    def initial_deal(self):
+        """Deal the opening four cards and return any blackjack result."""
         self.display.animate_deal(self.deal_card, self.player_hand, lambda: self.get_table_state("Dealing Cards"))
         self.display.animate_deal(self.deal_card, self.dealer_hand, lambda: self.get_table_state("Dealing Cards"))
         self.display.animate_deal(self.deal_card, self.player_hand, lambda: self.get_table_state("Dealing Cards"))
         self.display.animate_deal(self.deal_card, self.dealer_hand, lambda: self.get_table_state("Initial Deal"))
 
-        blackjack_result = self.check_initial_blackjack()
-        if blackjack_result:
-            self.show_result("Round Result", blackjack_result, "green")
-            return
+        return self.check_initial_blackjack()
 
+    def handle_player_turn(self):
+        """Run the player's turn. Return True if the round ends here."""
         while True:
             action = self.display.input_action()
 
@@ -147,10 +147,10 @@ class BlackjackGame:
 
                 if self.player_hand.is_busted():
                     self.show_result("Round Result", "Player busted! Dealer wins.", "red")
-                    return
+                    return True
             elif action == "stand":
                 self.display.print_colored("\nPlayer stands.", "yellow", bold=True)
-                break
+                return False
             else:
                 hint = self.hint_action_basic_strategy()
                 self.display.print_colored(
@@ -159,6 +159,8 @@ class BlackjackGame:
                     bold=True,
                 )
 
+    def handle_dealer_turn(self):
+        """Reveal the dealer's hand and play out dealer hits."""
         self.display.display_table(**self.get_table_state("Dealer Reveals", reveal_dealer=True))
 
         while self.dealer_should_hit():
@@ -168,6 +170,8 @@ class BlackjackGame:
                 lambda: self.get_table_state("Dealer Hits", reveal_dealer=True),
             )
 
+    def show_final_result(self):
+        """Display the final hands and winner."""
         self.display.display_table(**self.get_table_state("Final Hands", reveal_dealer=True))
 
         result = self.determine_winner()
@@ -183,19 +187,17 @@ class BlackjackGame:
         self.display.print_colored(result, result_color, bold=True)
         self.display.print_divider()
 
+    def play_game(self):
+        """Play one round of blackjack."""
+        self.start_round()
 
-# Program entry point
-def main():
-    display = Display()
-    game = BlackjackGame(display)
+        blackjack_result = self.initial_deal()
+        if blackjack_result:
+            self.show_result("Round Result", blackjack_result, "green")
+            return
 
-    while True:
-        game.play_game()
-        play_again = input(display.colorize("\nDo you want to play again? (y/n): ", "orange", bold=True)).lower()
-        if play_again != "y":
-            display.print_colored("Thanks for playing!", "cyan", bold=True)
-            break
+        if self.handle_player_turn():
+            return
 
-
-if __name__ == "__main__":
-    main()
+        self.handle_dealer_turn()
+        self.show_final_result()
