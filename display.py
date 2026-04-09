@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 
 ##########################################################################################################################################################################
@@ -6,6 +7,18 @@ import sys
 # Methods: display_graphical_hand (displays a hand using ASCII art), display_table (displays the current table state)
 ##########################################################################################################################################################################
 class Display:
+    # =============================
+    # animate_deal method
+    # deals a card, displays the table, flushes, and sleeps for animation
+    # =============================
+    def animate_deal(self, deal_card_func, hand, title, player_hand, dealer_hand, reveal_dealer, running_count):
+        import sys
+        deal_card_func(hand)
+        self.display_table(title, player_hand=player_hand, dealer_hand=dealer_hand, reveal_dealer=reveal_dealer, running_count=running_count)
+        sys.stdout.flush()
+        import time
+        time.sleep(0.5)
+
     def __init__(self):
         self.use_color = self._enable_ansi_colors()
         self.colors = {
@@ -16,6 +29,7 @@ class Display:
             'green': '\033[32m',
             'red': '\033[31m',
             'magenta': '\033[35m',
+            'orange': '\033[38;5;208m',
         }
 
     def colorize(self, text, color_key, bold=False):
@@ -96,13 +110,13 @@ class Display:
         hide_card = not reveal_dealer
         self.display_graphical_hand(dealer_hand, hide_dealer_card=hide_card)
         if reveal_dealer:
-            self.print_colored(f"Dealer total: {dealer_hand.value()}", 'yellow')
+            self.print_colored(f"\nDealer total: {dealer_hand.value()}", 'yellow', bold=True)
         else:
-            self.print_colored(f"Dealer showing: {self.get_visible_value(dealer_hand, True)}", 'yellow')
+            self.print_colored(f"\nDealer showing: {self.get_visible_value(dealer_hand, True)}", 'yellow', bold=True)
 
-        self.print_colored("Player:", 'green', bold=True)
+        self.print_colored("\nPlayer:", 'green', bold=True)
         self.display_graphical_hand(player_hand)
-        self.print_colored(f"Player total: {player_hand.value()}", 'yellow')
+        self.print_colored(f"\nPlayer total: {player_hand.value()}", 'yellow', bold=True)
 
     def _enable_ansi_colors(self):
         # Try to enable ANSI color support on Windows terminals.
@@ -120,7 +134,17 @@ class Display:
     # =============================
     def get_visible_value(self, hand, hide_dealer_card=False):
         if hide_dealer_card:
-            return hand.cards[0].value()
+            if hand.cards:
+                return hand.cards[0].value()
+            else:
+                return 0
         else:
             return hand.value()
+    # =============================
+    # clear_screen method
+    # clears the terminal screen for better readability
+    # =============================
+    def clear_screen(self):
+        command = 'cls' if os.name == 'nt' else 'clear'
+        subprocess.run(command, shell=True)
     

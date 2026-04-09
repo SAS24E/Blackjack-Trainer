@@ -1,8 +1,7 @@
 from display import Display
 from hand import Hand
 from deck import Deck
-
-
+import time
 #########################################################################################################################################################################
 # BlackjackGame Class
 # Attributes: deck, player_hand, dealer_hand
@@ -11,6 +10,7 @@ from deck import Deck
 # display_table, play_game
 #########################################################################################################################################################################
 class BlackjackGame:
+        # =============================
     def __init__(self, display):
         self.display = display
         self.deck = Deck()
@@ -149,7 +149,7 @@ class BlackjackGame:
         }
 
         while True:
-            prompt = self.display.colorize("Action [1] Hit [2] Stand [3] Hint: ", 'yellow', bold=True)
+            prompt = self.display.colorize("\nAction [1] Hit [2] Stand [3] Hint: ", 'yellow', bold=True)
             choice = input(prompt).strip()
             if choice in actions:
                 return choice
@@ -163,13 +163,12 @@ class BlackjackGame:
     def play_game(self):
         self.restart_game()
 
-        # Initial deal
-        self.deal_card(self.player_hand)
-        self.deal_card(self.dealer_hand)
-        self.deal_card(self.player_hand)
-        self.deal_card(self.dealer_hand)
-
-        self.display.display_table("Initial Deal", player_hand=self.player_hand, dealer_hand=self.dealer_hand, reveal_dealer=False, running_count=self.running_count)
+        # Initial deal with animation
+        import sys
+        self.display.animate_deal(self.deal_card, self.player_hand, "Dealing Cards", self.player_hand, self.dealer_hand, False, self.running_count)
+        self.display.animate_deal(self.deal_card, self.dealer_hand, "Dealing Cards", self.player_hand, self.dealer_hand, False, self.running_count)
+        self.display.animate_deal(self.deal_card, self.player_hand, "Dealing Cards", self.player_hand, self.dealer_hand, False, self.running_count)
+        self.display.animate_deal(self.deal_card, self.dealer_hand, "Initial Deal", self.player_hand, self.dealer_hand, False, self.running_count)
 
         blackjack_result = self.check_initial_blackjack()
         if blackjack_result:
@@ -185,8 +184,9 @@ class BlackjackGame:
             action = self.input_action()
 
             if action == '1':
-                self.player_hit()
-                self.display.display_table("Player Hits", player_hand=self.player_hand, dealer_hand=self.dealer_hand, reveal_dealer=False, running_count=self.running_count)
+
+                self.display.clear_screen()
+                self.display.animate_deal(self.deal_card, self.player_hand, "Player Hits", self.player_hand, self.dealer_hand, False, self.running_count)
 
                 if self.player_hand.is_busted():
                     self.display.display_table("Round Result", player_hand=self.player_hand, dealer_hand=self.dealer_hand, reveal_dealer=True, running_count=self.running_count)
@@ -195,19 +195,19 @@ class BlackjackGame:
                     return
 
             elif action == '2':
-                self.display.print_colored("\n" + self.display.colorize("Player stands.", 'yellow'), 'yellow', bold=True)
+                self.display.clear_screen()
+                self.display.print_colored(("\nPlayer stands.", 'yellow'), 'yellow', bold=True)
                 break
 
             elif action == '3':
                 hint = self.hint_action_basic_strategy()
-                self.display.print_colored("\n" + self.display.colorize(f"Hint: You should {hint.upper()} according to basic strategy.", 'yellow', bold=True), 'yellow', bold=True)
+                self.display.print_colored(f"\nHint: You should {hint.upper()} according to basic strategy.", 'green', bold=True)
 
         # Dealer turn
         self.display.display_table("Dealer Reveals", player_hand=self.player_hand, dealer_hand=self.dealer_hand, reveal_dealer=True, running_count=self.running_count)
 
         while self.dealer_should_hit():
-            self.deal_card(self.dealer_hand)
-            self.display.display_table("Dealer Hits", player_hand=self.player_hand, dealer_hand=self.dealer_hand, reveal_dealer=True, running_count=self.running_count)
+            self.display.animate_deal(self.deal_card, self.dealer_hand, "Dealer Hits", self.player_hand, self.dealer_hand, True, self.running_count)
 
         self.display.display_table("Final Hands", player_hand=self.player_hand, dealer_hand=self.dealer_hand, reveal_dealer=True, running_count=self.running_count)
 
@@ -228,7 +228,7 @@ def main():
     game = BlackjackGame(display)
     while True:
         game.play_game()
-        play_again = input(game.display.colorize("Do you want to play again? (y/n): ", 'yellow', bold=True)).lower()
+        play_again = input(game.display.colorize("\nDo you want to play again? (y/n): ", 'orange', bold=True)).lower()
         if play_again != 'y':
             game.display.print_colored("Thanks for playing!", 'cyan', bold=True)
             break
