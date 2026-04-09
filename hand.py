@@ -1,31 +1,23 @@
-from card import Card
-#########################################################################################################################################################################
-# Hand Class
-# Attributes: cards (a list of Card objects in the hand)
-# Methods: add_card, value, is_busted, is_blackjack
-#########################################################################################################################################################################
 class Hand:
+    """A blackjack hand."""
+
+    # Hand lifecycle
     def __init__(self):
         self.cards = []
 
-    # =============================
-    # add_card method
-    # adds a card to the hand
-    # =============================
+    # Hand behavior
     def add_card(self, card):
+        """Add a card to the hand."""
         self.cards.append(card)
 
-    # =============================
-    # value method
-    # calculates the total value of the hand according to blackjack rules
-    # =============================
     def value(self):
+        """Calculate the best blackjack value for the hand."""
         total = 0
         aces = 0
 
         for card in self.cards:
             total += card.value()
-            if card.rank == 'ace':
+            if card.rank == "ace":
                 aces += 1
 
         while total > 21 and aces:
@@ -34,16 +26,10 @@ class Hand:
 
         return total
 
-    # =============================
-    # is_busted method
-    # returns True if the hand value exceeds 21
-    # =============================
     def is_busted(self):
+        """Return True when the hand is over 21."""
         return self.value() > 21
 
-    # =============================
-    # is_blackjack method
-    # returns True if the hand is a blackjack (21 with exactly two cards)
-    # =============================
     def is_blackjack(self):
+        """Return True for a two-card 21."""
         return self.value() == 21 and len(self.cards) == 2
