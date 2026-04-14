@@ -17,6 +17,7 @@ class BlackjackGame:
         self.reshuffle_threshold = 15
         self.current_bet = 0
         self.dealer_hole_card_revealed = False
+        self.credits = player.credits
 
     # Deck and state helpers
     def update_running_count(self, card):
@@ -108,24 +109,63 @@ class BlackjackGame:
 
         if player_total > 21:
             self.player.lost_bet(self.player.current_bet)
+            self.display.display_credits(self.player.credits)
             return "Dealer wins! Player busted."
         if dealer_total > 21:
             self.player.won_bet(self.player.current_bet)
+            self.display.display_credits(self.player.credits)
             return "Player wins! Dealer busted."
         if player_total > dealer_total:
             self.player.won_bet(self.player.current_bet)
+            self.display.display_credits(self.player.credits)
             return "Player wins!"
         if dealer_total > player_total:
             self.player.lost_bet(self.player.current_bet)
+            self.display.display_credits(self.player.credits)
             return "Dealer wins!"
         self.player.push_bet(self.player.current_bet)
         return "It's a tie!"
 
+    def can_double_down(self):
+        """Return True when the player can still legally double down."""
+        return len(self.player.hand.cards) == 2 and (self.player.current_bet * 2) <= self.player.credits
+
+    def _format_double_hint(self, fallback_action):
+        """Return the right hint text for a recommended double-down spot."""
+        if self.can_double_down():
+            return "double"
+        return f"double if allowed, otherwise {fallback_action}"
+
     def hint_action_basic_strategy(self):
-        """Return a simple hit-or-stand basic-strategy hint."""
-        # need to add double down basic strategy hints here as well.  ## Remove comment when added
+        """Return a basic-strategy hint including common double-down spots."""
         player_total = self.player.hand.value()
         dealer_card = self.get_dealer_visible_value()
+        is_soft_total = self.player.hand.is_soft()
+
+        if is_soft_total and len(self.player.hand.cards) == 2:
+            if player_total in {13, 14} and dealer_card in {5, 6}:
+                return self._format_double_hint("hit")
+            if player_total in {15, 16} and dealer_card in {4, 5, 6}:
+                return self._format_double_hint("hit")
+            if player_total == 17 and dealer_card in {3, 4, 5, 6}:
+                return self._format_double_hint("hit")
+            if player_total == 18:
+                if dealer_card in {3, 4, 5, 6}:
+                    return self._format_double_hint("stand")
+                if dealer_card in {2, 7, 8}:
+                    return "stand"
+                return "hit"
+            if player_total >= 19:
+                return "stand"
+            return "hit"
+
+        if len(self.player.hand.cards) == 2:
+            if player_total == 9 and dealer_card in {3, 4, 5, 6}:
+                return self._format_double_hint("hit")
+            if player_total == 10 and dealer_card in {2, 3, 4, 5, 6, 7, 8, 9}:
+                return self._format_double_hint("hit")
+            if player_total == 11 and dealer_card != 11:
+                return self._format_double_hint("hit")
 
         if player_total >= 17:
             return "stand"
@@ -160,9 +200,10 @@ class BlackjackGame:
     def handle_player_turn(self):
         """Run the player's turn. Return True if the round ends here."""
         while True:
-            action = self.display.input_action()
+            hand_length = len(self.player.hand.cards)
+            action = self.display.input_action(hand_length, self.can_double_down())
 
-            if action == "hit": # Thanks to input_action we are able to use the string "hit" instead of a numeric choice here.
+            if action == "hit":
                 self.display.clear_screen()
                 self.display.animate_deal(self.deal_card, self.player.hand, lambda: self.get_table_state("Player Hits"))
 
@@ -173,7 +214,7 @@ class BlackjackGame:
             elif action == "stand":
                 self.display.print_colored("\nPlayer stands.", "yellow", bold=True)
                 return False
-            elif action == "double" and self.player.current_bet <= self.player.credits and len(self.player.hand.cards) == 2: # Handle double means we need to double the current bet and close out.
+            elif action == "double" and self.can_double_down():
                 self.player.place_bet(self.player.current_bet * 2)
                 self.display.clear_screen()
                 self.display.animate_deal(self.deal_card, self.player.hand, lambda: self.get_table_state("Player Doubles and Stands"))

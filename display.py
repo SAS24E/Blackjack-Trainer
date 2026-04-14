@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 import time
-
+from blackjack import BlackjackGame
 class Display:
     """Terminal rendering and input helpers."""
 
@@ -49,45 +49,65 @@ class Display:
     def print_colored(self, text, color_key, bold=False):
         print(self.colorize(text, color_key, bold))
 
-    def input_action(self):
-        """Prompt the player for an action and validate it.""" 
-        actions = {  
-            "1": "hit",
-            "2": "stand",
-            "3": "double",
-            "4": "hint",
-        }
+    def format_amount(self, amount):
+        """Format credits and bets without trailing .0 values."""
+        if amount is None:
+            return ""
+        if float(amount).is_integer():
+            return str(int(amount))
+        return f"{amount:.1f}"
 
-        while True:
+    def input_action(self, hand_length, can_double=False):
+        """Prompt the player for an action and validate it."""
+        if hand_length == 2 and can_double:
+            actions = {
+                "1": "hit",
+                "2": "stand",
+                "3": "double",
+                "4": "hint",
+            }
+
             prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Double [4] Hint: ", "yellow", bold=True)
-            choice = input(prompt).strip()  
+        else:
+            actions = {
+                "1": "hit",
+                "2": "stand",
+                "3": "hint",
+            }
+            prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Hint: ", "yellow", bold=True)
+        while True:
+            choice = input(prompt).strip()
             if choice in actions:
-                return actions[choice] 
-            self.print_colored("Invalid input. Please enter 1, 2, 3, or 4.", "red", bold=True)
+                return actions[choice]
+            self.print_colored("Invalid input. Please enter a valid option.", "red", bold=True)
 
     def input_bet(self, available_credits):
-        """Prompt for a numeric bet that does not exceed available credits."""
+        """Prompt for a bet in whole- or half-credit increments."""
         while True:
             prompt = self.colorize(
-                f"\nEnter bet amount (available: {available_credits}): ",
+                f"\nEnter bet amount (available: {self.format_amount(available_credits)}): ",
                 "yellow",
                 bold=True,
             )
             raw_value = input(prompt).strip()
 
-            if not raw_value.isdigit():
-                self.print_colored("Invalid bet. Enter a whole number.", "red", bold=True)
+            try:
+                bet_amount = float(raw_value)
+            except ValueError:
+                self.print_colored("Invalid bet. Enter a whole number or a value ending in .5.", "red", bold=True)
                 continue
 
-            bet_amount = int(raw_value)
             if bet_amount <= 0:
                 self.print_colored("Bet must be greater than zero.", "red", bold=True)
+                continue
+            if not (bet_amount * 2).is_integer():
+                self.print_colored("Bet must be in whole- or half-credit increments.", "red", bold=True)
                 continue
             if bet_amount > available_credits:
                 self.print_colored("Bet cannot exceed available credits.", "red", bold=True)
                 continue
 
-            return bet_amount
+            return int(bet_amount) if bet_amount.is_integer() else bet_amount
 
     # Table rendering
     def display_graphical_hand(self, hand, hide_dealer_card=False):
@@ -175,4 +195,4 @@ class Display:
         """Display credits when provided by the game state."""
         if credits is None:
             return
-        self.print_colored(f"Credits: {credits}", "green", bold=True)
+        self.print_colored(f"Credits: {self.format_amount(credits)}", "green", bold=True)

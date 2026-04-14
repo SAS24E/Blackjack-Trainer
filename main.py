@@ -5,7 +5,7 @@ from player import Player
 
 # Program entry point
 def main():
-    display = Display()
+    display = Display() 
     while True:
         player_name = input(display.colorize("Enter your name: ", "cyan", bold=True)).strip()
         if player_name:
@@ -17,12 +17,12 @@ def main():
     game = BlackjackGame(display, player)
 
     while True:
-        if game.player.credits <= 0:
+        if game.player.credits < 0.5:
             display.print_colored("\nYou are out of credits. Game over!", "red", bold=True)
             break
 
         game.play_game()
-        game.player.save_to_file(game.player.file_name)  # Save player data at the end of the game
+        game.player.save_to_file(game.player.file_name)
         play_again = input(display.colorize("\nDo you want to play again? (y/n): ", "orange", bold=True)).lower()
         if play_again != "y":
             display.print_colored("Thanks for playing!", "cyan", bold=True)

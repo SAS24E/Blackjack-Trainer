@@ -26,6 +26,22 @@ class Hand:
 
         return total
 
+    def is_soft(self):
+        """Return True when an ace is counted as 11 in the current hand value."""
+        total = 0
+        aces = 0
+
+        for card in self.cards:
+            total += card.value()
+            if card.rank == "ace":
+                aces += 1
+
+        while total > 21 and aces:
+            total -= 10
+            aces -= 1
+
+        return aces > 0
+
     def is_busted(self):
         """Return True when the hand is over 21."""
         return self.value() > 21
