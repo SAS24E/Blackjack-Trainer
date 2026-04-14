@@ -3,7 +3,6 @@ import subprocess
 import sys
 import time
 
-
 class Display:
     """Terminal rendering and input helpers."""
 
@@ -65,6 +64,30 @@ class Display:
                 return actions[choice]
             self.print_colored("Invalid input. Please enter 1, 2, or 3.", "red", bold=True)
 
+    def input_bet(self, available_credits):
+        """Prompt for a numeric bet that does not exceed available credits."""
+        while True:
+            prompt = self.colorize(
+                f"\nEnter bet amount (available: {available_credits}): ",
+                "yellow",
+                bold=True,
+            )
+            raw_value = input(prompt).strip()
+
+            if not raw_value.isdigit():
+                self.print_colored("Invalid bet. Enter a whole number.", "red", bold=True)
+                continue
+
+            bet_amount = int(raw_value)
+            if bet_amount <= 0:
+                self.print_colored("Bet must be greater than zero.", "red", bold=True)
+                continue
+            if bet_amount > available_credits:
+                self.print_colored("Bet cannot exceed available credits.", "red", bold=True)
+                continue
+
+            return bet_amount
+
     # Table rendering
     def display_graphical_hand(self, hand, hide_dealer_card=False):
         """Render a hand as ASCII playing cards."""
@@ -110,6 +133,7 @@ class Display:
         reveal_dealer=False,
         running_count=0,
         dealer_visible_value=0,
+        player_credits=None,
     ):
         """Render the current table state."""
         print()
@@ -129,6 +153,8 @@ class Display:
         self.print_colored("\nPlayer:", "green", bold=True)
         self.display_graphical_hand(player_hand)
         self.print_colored(f"\nPlayer total: {player_hand.value()}", "yellow", bold=True)
+        self.display_credits(player_credits)
+        self.print_divider()
 
     # Terminal helpers
     def _enable_ansi_colors(self):
@@ -143,3 +169,9 @@ class Display:
         """Clear the terminal screen."""
         command = "cls" if os.name == "nt" else "clear"
         subprocess.run(command, shell=True)
+
+    def display_credits(self, credits=None):
+        """Display credits when provided by the game state."""
+        if credits is None:
+            return
+        self.print_colored(f"Credits: {credits}", "green", bold=True)

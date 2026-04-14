@@ -8,6 +8,10 @@ def main():
     game = BlackjackGame(display)
 
     while True:
+        if game.player.credits <= 0:
+            display.print_colored("\nYou are out of credits. Game over!", "red", bold=True)
+            break
+
         game.play_game()
         play_again = input(display.colorize("\nDo you want to play again? (y/n): ", "orange", bold=True)).lower()
         if play_again != "y":
