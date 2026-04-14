@@ -1,20 +1,18 @@
 from deck import Deck
 from hand import Hand
-from player import Player
 
 
 class BlackjackGame:
     """Core blackjack game logic."""
 
-    LOW_COUNT_CARDS = {"2", "3", "4", "5", "6"}
-    HIGH_COUNT_CARDS = {"10", "jack", "queen", "king", "ace"}
+    LOW_COUNT_CARDS = {"2", "3", "4", "5", "6"} 
+    HIGH_COUNT_CARDS = {"10", "jack", "queen", "king", "ace"} 
 
     # Setup
-    def __init__(self, display):
+    def __init__(self, display, player):
         self.display = display
         self.deck = Deck()
-        self.player = Player("Player")
-        self.dealer_hand = Hand()
+        self.player = player
         self.running_count = 0
         self.reshuffle_threshold = 15
         self.current_bet = 0
@@ -125,6 +123,7 @@ class BlackjackGame:
 
     def hint_action_basic_strategy(self):
         """Return a simple hit-or-stand basic-strategy hint."""
+        # need to add double down basic strategy hints here as well.  ## Remove comment when added
         player_total = self.player.hand.value()
         dealer_card = self.get_dealer_visible_value()
 
@@ -135,6 +134,7 @@ class BlackjackGame:
         if player_total == 12:
             return "stand" if dealer_card in {4, 5, 6} else "hit"
         return "hit"
+    
 
     # Round flow
     def show_result(self, title, message, color):
@@ -162,7 +162,7 @@ class BlackjackGame:
         while True:
             action = self.display.input_action()
 
-            if action == "hit":
+            if action == "hit": # Thanks to input_action we are able to use the string "hit" instead of a numeric choice here.
                 self.display.clear_screen()
                 self.display.animate_deal(self.deal_card, self.player.hand, lambda: self.get_table_state("Player Hits"))
 
@@ -172,6 +172,15 @@ class BlackjackGame:
                     return True
             elif action == "stand":
                 self.display.print_colored("\nPlayer stands.", "yellow", bold=True)
+                return False
+            elif action == "double" and self.player.current_bet <= self.player.credits and len(self.player.hand.cards) == 2: # Handle double means we need to double the current bet and close out.
+                self.player.place_bet(self.player.current_bet * 2)
+                self.display.clear_screen()
+                self.display.animate_deal(self.deal_card, self.player.hand, lambda: self.get_table_state("Player Doubles and Stands"))
+                if self.player.hand.is_busted():
+                    self.player.lost_bet(self.player.current_bet)
+                    self.show_result("Round Result", "Player busted! Dealer wins.", "red")
+                    return True
                 return False
             else:
                 hint = self.hint_action_basic_strategy()
@@ -209,7 +218,7 @@ class BlackjackGame:
         self.display.print_divider()
         self.display.print_colored(result, result_color, bold=True)
         self.display.print_divider()
-        
+
     def play_game(self):
         """Play one round of blackjack."""
         self.start_round()

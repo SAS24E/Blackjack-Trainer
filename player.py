@@ -1,15 +1,18 @@
-
+import json
 from hand import Hand
 
 class Player:
+    """Represents a blackjack player with a hand, credits, and statistics."""
+    
     def __init__(self, name):
-        self.name = name # Player's name for display purposes
+        self.name = name.strip()  # Player's name for display purposes
         self.hand = Hand() # The player's current hand of cards
         self.credits = 1000  # Starting credits for betting
         self.wins = 0
         self.losses = 0
         self.ties = 0
         self.current_bet = 0  # Track the current bet amount for the round
+        self.file_name = f"{self.name}_data.txt"  # File to save/load player data
 
     def add_credit(self, amount):
         """Add credits to the player's balance."""
@@ -45,4 +48,40 @@ class Player:
         self.current_bet = amount
         return self.current_bet
     
-        
+    def load_from_file(self, filename):
+        """Load player data from a file"""
+        try:
+            with open(filename, 'r') as file:
+                data = json.load(file)
+                self.name = data.get('name', self.name)
+                self.credits = data.get('credits', self.credits)
+                self.wins = data.get('wins', self.wins)
+                self.losses = data.get('losses', self.losses)
+                self.ties = data.get('ties', self.ties)
+        except FileNotFoundError:
+            print(f"No save file found for {self.name}. Starting with default values.")
+
+
+    def save_to_file(self, filename):
+        """Save player data to a file"""
+        try:
+            with open(filename, 'w') as file:
+                json.dump({
+                    'name': self.name,
+                    'credits': self.credits,
+                    'wins': self.wins,
+                    'losses': self.losses,
+                    'ties': self.ties
+                    }, file, indent=4)
+        except IOError as e:
+            print(f"Error saving player data: {e}")
+    
+    def display_stats(self):
+        """Display the player's current statistics."""
+        print(f"Player: {self.name}")
+        print(f"Credits: {self.credits}")
+        print(f"Wins: {self.wins}")
+        print(f"Losses: {self.losses}")
+        print(f"Ties: {self.ties}")
+    
+    

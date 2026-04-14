@@ -50,19 +50,20 @@ class Display:
         print(self.colorize(text, color_key, bold))
 
     def input_action(self):
-        """Prompt the player for an action and validate it."""
-        actions = {
+        """Prompt the player for an action and validate it.""" 
+        actions = {  
             "1": "hit",
             "2": "stand",
-            "3": "hint",
+            "3": "double",
+            "4": "hint",
         }
 
         while True:
-            prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Hint: ", "yellow", bold=True)
-            choice = input(prompt).strip()
+            prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Double [4] Hint: ", "yellow", bold=True)
+            choice = input(prompt).strip()  
             if choice in actions:
-                return actions[choice]
-            self.print_colored("Invalid input. Please enter 1, 2, or 3.", "red", bold=True)
+                return actions[choice] 
+            self.print_colored("Invalid input. Please enter 1, 2, 3, or 4.", "red", bold=True)
 
     def input_bet(self, available_credits):
         """Prompt for a numeric bet that does not exceed available credits."""
