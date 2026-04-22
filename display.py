@@ -2,11 +2,11 @@ import os
 import subprocess
 import sys
 import time
-from blackjack import BlackjackGame
+
 class Display:
     """Terminal rendering and input helpers."""
 
-    # Display constants
+    # === Constants ===
     COLORS = {
         "reset": "\033[0m",
         "bold": "\033[1m",
@@ -25,19 +25,16 @@ class Display:
         "jack": "J",
     }
 
-    # Setup
+    # === Initialization ===
     def __init__(self):
         self.use_color = self._enable_ansi_colors()
 
-    # Input and animation
-    def animate_deal(self, deal_card_func, hand, table_state_getter):
-        """Deal a card and render the updated table as one animation frame."""
-        deal_card_func(hand)
-        self.clear_screen()
-        self.display_table(**table_state_getter())
-        sys.stdout.flush()
-        time.sleep(0.5)
+    def _enable_ansi_colors(self):
+        if os.name == "nt":
+            os.system("")
+        return sys.stdout.isatty()
 
+    # === Text Formatting & Styling ===
     def colorize(self, text, color_key, bold=False):
         if not self.use_color:
             return text
@@ -57,16 +54,29 @@ class Display:
             return str(int(amount))
         return f"{amount:.1f}"
 
-    def input_action(self, hand_length, can_double=False):
+    # === User Input ===
+    def input_action(self, hand_length, can_double=False, can_split=False):
         """Prompt the player for an action and validate it."""
-        if hand_length == 2 and can_double:
+        if hand_length == 2 and can_split:
+            actions = {
+                "1": "hit",
+                "2": "stand",
+                "3": "split",
+                "4": "double" if can_double else "hint",
+                "5": "hint" if can_double else None,
+            }
+            actions = {k: v for k, v in actions.items() if v is not None}
+            if can_double:
+                prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Split [4] Double [5] Hint: ", "yellow", bold=True)
+            else:
+                prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Split [4] Hint: ", "yellow", bold=True)
+        elif hand_length == 2 and can_double:
             actions = {
                 "1": "hit",
                 "2": "stand",
                 "3": "double",
                 "4": "hint",
             }
-
             prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Double [4] Hint: ", "yellow", bold=True)
         else:
             actions = {
@@ -109,7 +119,38 @@ class Display:
 
             return int(bet_amount) if bet_amount.is_integer() else bet_amount
 
-    # Table rendering
+    # === Game Display ===
+    def display_table(
+        self,
+        title,
+        player_hand,
+        dealer_hand,
+        reveal_dealer=False,
+        running_count=0,
+        dealer_visible_value=0,
+        player_credits=None,
+    ):
+        """Render the current table state."""
+        print()
+        self.print_divider()
+        self.print_colored(title, "cyan", bold=True)
+        self.print_divider()
+
+        self.print_colored(f"Running Count: {running_count}", "cyan", bold=True)
+
+        self.print_colored("Dealer:", "magenta", bold=True)
+        self.display_graphical_hand(dealer_hand, hide_dealer_card=not reveal_dealer)
+        if reveal_dealer:
+            self.print_colored(f"\nDealer total: {dealer_hand.value()}", "yellow", bold=True)
+        else:
+            self.print_colored(f"\nDealer showing: {dealer_visible_value}", "yellow", bold=True)
+
+        self.print_colored("\nPlayer:", "green", bold=True)
+        self.display_graphical_hand(player_hand)
+        self.print_colored(f"\nPlayer total: {player_hand.value()}", "yellow", bold=True)
+        self.display_credits(player_credits)
+        self.print_divider()
+
     def display_graphical_hand(self, hand, hide_dealer_card=False):
         """Render a hand as ASCII playing cards."""
         card_height = 7
@@ -146,53 +187,25 @@ class Display:
         for line in card_lines:
             print("  ".join(line))
 
-    def display_table(
-        self,
-        title,
-        player_hand,
-        dealer_hand,
-        reveal_dealer=False,
-        running_count=0,
-        dealer_visible_value=0,
-        player_credits=None,
-    ):
-        """Render the current table state."""
-        print()
-        self.print_divider()
-        self.print_colored(title, "cyan", bold=True)
-        self.print_divider()
-
-        self.print_colored(f"Running Count: {running_count}", "cyan", bold=True)
-
-        self.print_colored("Dealer:", "magenta", bold=True)
-        self.display_graphical_hand(dealer_hand, hide_dealer_card=not reveal_dealer)
-        if reveal_dealer:
-            self.print_colored(f"\nDealer total: {dealer_hand.value()}", "yellow", bold=True)
-        else:
-            self.print_colored(f"\nDealer showing: {dealer_visible_value}", "yellow", bold=True)
-
-        self.print_colored("\nPlayer:", "green", bold=True)
-        self.display_graphical_hand(player_hand)
-        self.print_colored(f"\nPlayer total: {player_hand.value()}", "yellow", bold=True)
-        self.display_credits(player_credits)
-        self.print_divider()
-
-    # Terminal helpers
-    def _enable_ansi_colors(self):
-        if os.name == "nt":
-            os.system("")
-        return sys.stdout.isatty()
-
-    def print_divider(self):
-        print(self.colorize("=" * 34, "cyan"))
-
-    def clear_screen(self):
-        """Clear the terminal screen."""
-        command = "cls" if os.name == "nt" else "clear"
-        subprocess.run(command, shell=True)
-
     def display_credits(self, credits=None):
         """Display credits when provided by the game state."""
         if credits is None:
             return
         self.print_colored(f"Credits: {self.format_amount(credits)}", "green", bold=True)
+
+    def animate_deal(self, deal_card_func, hand, table_state_getter):
+        """Deal a card and render the updated table as one animation frame."""
+        deal_card_func(hand)
+        self.clear_screen()
+        self.display_table(**table_state_getter())
+        sys.stdout.flush()
+        time.sleep(0.5)
+
+    # === Terminal Helpers ===
+    def clear_screen(self):
+        """Clear the terminal screen."""
+        command = "cls" if os.name == "nt" else "clear"
+        subprocess.run(command, shell=True)
+
+    def print_divider(self):
+        print(self.colorize("=" * 34, "cyan"))

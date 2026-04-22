@@ -13,6 +13,25 @@ class Player:
         self.ties = 0
         self.current_bet = 0  # Track the current bet amount for the round
         self.file_name = f"{self.name}_data.txt"  # File to save/load player data
+        self.split_hands = []  # Track split hands if the player chooses to split
+        self.split_bets = []  # Track bets for split hands
+        
+    def split_hand(self):
+        """Split the player's hand into two hands if possible."""
+        if len(self.hand.cards) == 2 and self.hand.cards[0].rank == self.hand.cards[1].rank:
+            # Create two new hands, each with one of the split cards
+            hand1 = Hand()
+            hand2 = Hand()
+            hand1.add_card(self.hand.cards[0])
+            hand2.add_card(self.hand.cards[1])
+            self.split_hands = [hand1, hand2]
+            # Each hand needs a bet; deduct the second bet from credits
+            self.split_bets = [self.current_bet, self.current_bet]
+            if self.current_bet > self.credits:
+                raise ValueError("Not enough credits to split.")
+            self.subtract_credit(self.current_bet)
+        else:
+            raise ValueError("Cannot split: cards are not a pair.")
 
     def add_credit(self, amount):
         """Add credits to the player's balance."""
@@ -76,12 +95,7 @@ class Player:
         except IOError as e:
             print(f"Error saving player data: {e}")
     
-    def display_stats(self):
-        """Display the player's current statistics."""
-        print(f"Player: {self.name}")
-        print(f"Credits: {self.credits}")
-        print(f"Wins: {self.wins}")
-        print(f"Losses: {self.losses}")
-        print(f"Ties: {self.ties}")
-    
-    
+    def has_split(self):
+        return len(self.split_hands) > 0
+
+
