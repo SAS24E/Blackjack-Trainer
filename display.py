@@ -67,9 +67,9 @@ class Display:
             }
             actions = {k: v for k, v in actions.items() if v is not None}
             if can_double:
-                prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Split [4] Double [5] Hint: ", "yellow", bold=True)
+                prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Split [4] Double [5] Hint: ", "yellow", bold=True)
             else:
-                prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Split [4] Hint: ", "yellow", bold=True)
+                prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Split [4] Hint: ", "yellow", bold=True)
         elif hand_length == 2 and can_double:
             actions = {
                 "1": "hit",
@@ -77,14 +77,14 @@ class Display:
                 "3": "double",
                 "4": "hint",
             }
-            prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Double [4] Hint: ", "yellow", bold=True)
+            prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Double [4] Hint: ", "yellow", bold=True)
         else:
             actions = {
                 "1": "hit",
                 "2": "stand",
                 "3": "hint",
             }
-            prompt = self.colorize("\nAction [1] Hit [2] Stand [3] Hint: ", "yellow", bold=True)
+            prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Hint: ", "yellow", bold=True)
         while True:
             choice = input(prompt).strip()
             if choice in actions:
