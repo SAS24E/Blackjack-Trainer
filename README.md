@@ -1,71 +1,77 @@
 # Blackjack Trainer
 
-A command-line Blackjack game in Python with card counting (Hi-Lo system), basic strategy hints, split hand support, and player persistence.
+A command-line Blackjack game in Python with betting, card counting, basic strategy hints, split hand support, and player save data.
 
 ## Features
 
-- ✅ Full Blackjack rules: hit, stand, double down, split hands
-- ✅ Card counting with running count display
-- ✅ Basic strategy hints for optimal play
-- ✅ Auto-stand at 21
-- ✅ Player stats and credits saved between sessions
+- Blackjack actions: hit, stand, double down, and split
+- Whole-number betting
+- Hi-Lo running count display
+- Basic strategy hints
+- Automatic stand at 21
+- Player credits and stats saved between sessions
 
-## Project Structure
-
-```
-blackjack-trainer/
-├── main.py              # Entry point
-├── blackjack.py         # Game engine and rules
-├── player.py            # Player state and betting
-├── hand.py              # Hand evaluation
-├── card.py              # Card representation
-├── deck.py              # Deck management
-├── display.py           # Terminal UI
-├── {player}_data.txt    # Saved player stats
-└── README.md
-```
-
-## Installation
+## How to Run
 
 ```bash
-python3 main.py
+python main.py
 ```
 
-No external dependencies required.
+No external dependencies are required.
 
 ## How to Play
 
-1. Enter your name
-2. Place a bet (whole or half-credit increments)
-3. Choose an action:
-   - **[1] Hit**: Take another card
-   - **[2] Stand**: Keep your hand
-   - **[3] Double**: Double bet, get one card (2-card hands only)
-   - **[4] Split**: Split matching cards into two hands
-   - **[5] Hint**: Get basic strategy recommendation
+1. Enter your name.
+2. Place a whole-number bet.
+3. Choose an action during your turn:
+   - `[1] Hit`: take another card
+   - `[2] Stand`: keep your current hand
+   - `[3] Double`: double your bet, take one card, then stand
+   - `[4] Split`: split a matching pair into two hands
+   - `Hint`: get a basic strategy recommendation when shown as an option
+4. After the round, your credits and stats are saved automatically.
 
 ## Game Rules
 
-- **Objective**: Get closer to 21 than dealer without busting
-- **Card Values**: 2-10 = face value, J/Q/K = 10, Ace = 11 or 1
-- **Blackjack**: 21 on first 2 cards (pays 1.5x)
-- **Push**: Tie with dealer (return bet)
-- **Bust**: Over 21 (lose bet)
-- **Dealer Rules**: Hits on 16 or lower, stands on 17+
+- The goal is to get closer to 21 than the dealer without busting.
+- Number cards are worth their face value.
+- Jack, queen, and king are worth 10.
+- Ace is worth 11 or 1, whichever works best for the hand.
+- Blackjack is a two-card 21 and pays 1.5x.
+- Push means a tie with the dealer.
+- Dealer hits on 16 or lower and stands on 17 or higher.
+
+## Project Structure
+
+```text
+blackjack-trainer/
+|-- main.py            # Program entry point
+|-- blackjack.py       # Main game flow and blackjack rules
+|-- basicstrategy.py   # Basic strategy hint logic
+|-- player.py          # Player credits, bets, stats, and save data
+|-- hand.py            # Hand value calculation
+|-- card.py            # Card representation
+|-- deck.py            # Deck creation and card dealing
+|-- display.py         # Terminal UI, prompts, and table display
+|-- *_data.txt         # Saved player data
+`-- README.md
+```
 
 ## File Descriptions
 
-| File           | Purpose                                     |
-| -------------- | ------------------------------------------- |
-| `main.py`      | CLI entry point and game loop               |
-| `blackjack.py` | Core game logic, rules, strategy hints      |
-| `player.py`    | Player state, betting, statistics, file I/O |
-| `hand.py`      | Hand value calculation and evaluation       |
-| `card.py`      | Card definition (rank, suit, value)         |
-| `deck.py`      | Deck creation and card dealing              |
-| `display.py`   | Terminal UI (colors, ASCII cards, prompts)  |
+| File | Purpose |
+| --- | --- |
+| `main.py` | Starts the program and controls replay/save flow |
+| `blackjack.py` | Runs rounds, handles actions, dealer play, results, splits, and card counting |
+| `basicstrategy.py` | Provides hint recommendations based on the player's hand and dealer upcard |
+| `player.py` | Stores player state, credits, bets, split hands, and save/load logic |
+| `hand.py` | Calculates hand totals, soft hands, busts, and blackjack |
+| `card.py` | Defines card ranks, suits, and card values |
+| `deck.py` | Builds, shuffles, and deals cards |
+| `display.py` | Handles terminal colors, user input, and card/table rendering |
 
 ## Author
+
 Stephen Secor
 
-Built as a final project for CIS4930 - Python Course at Florida State University
+Built as a final project for CIS4930 - Python Course at Florida State University.
