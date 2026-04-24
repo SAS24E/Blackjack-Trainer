@@ -6,30 +6,30 @@ class Player:
     """Represents a blackjack player with a hand, credits, and statistics."""
 
     def __init__(self, name):
-        self.name = name.strip()  # Player's name for display purposes
-        self.hand = Hand()  # The player's current hand of cards
-        self.credits = 1000  # Starting credits for betting
+        self.name = name.strip() 
+        self.hand = Hand() 
+        self.credits = 1000 
         self.wins = 0
         self.losses = 0
         self.ties = 0
-        self.current_bet = 0  # Track the current bet amount for the round
-        self.file_name = f"{self.name}_data.txt"  # File to save/load player data
-        self.split_hands = []  # Track split hands if the player chooses to split
-        self.split_bets = []  # Track bets for split hands
+        self.current_bet = 0  
+        self.file_name = f"{self.name}_data.txt" 
+        self.split_hands = [] 
+        self.split_bets = []  
 
     def split_hand(self):
         """Split the player's hand into two hands if possible."""
         if len(self.hand.cards) == 2 and self.hand.cards[0].rank == self.hand.cards[1].rank:
+            if self.current_bet * 2 > self.credits:
+                raise ValueError("Not enough credits to split.")
+
             # Create two new hands, each with one of the split cards
             hand1 = Hand()
             hand2 = Hand()
             hand1.add_card(self.hand.cards[0])
             hand2.add_card(self.hand.cards[1])
             self.split_hands = [hand1, hand2]
-            # Each hand needs a bet; deduct the second bet from credits
             self.split_bets = [self.current_bet, self.current_bet]
-            if self.current_bet > self.credits:
-                raise ValueError("Not enough credits to split.")
             self.subtract_credit(self.current_bet)
         else:
             raise ValueError("Cannot split: cards are not a pair.")

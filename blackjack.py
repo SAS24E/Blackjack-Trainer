@@ -1,5 +1,6 @@
 from deck import Deck
 from hand import Hand
+from basicstrategy import BasicStrategy
 
 
 class BlackjackGame:
@@ -11,13 +12,14 @@ class BlackjackGame:
 
     # === Initialization ===
     def __init__(self, ui, player):
-        self.ui = ui
-        self.deck = Deck()
-        self.player = player
+        self.ui = ui 
+        self.deck = Deck() 
+        self.player = player 
         self.running_count = 0
         self.reshuffle_threshold = 15
         self.current_bet = 0
         self.dealer_hole_card_revealed = False
+        self.basic_strategy = BasicStrategy(self)
 
     # === Deck & Card Counting ===
     def update_running_count(self, card):
@@ -29,7 +31,7 @@ class BlackjackGame:
 
     def deal_card(self, hand, count_card=True):
         """Deal one card to the given hand."""
-        if not self.deck.cards:
+        if not self.deck.cards: 
             raise RuntimeError("The deck ran out of cards during the round.")
 
         card = self.deck.deal_card()
@@ -60,7 +62,7 @@ class BlackjackGame:
     def reset_hands(self):
         """Prepare a fresh round while keeping the current shoe."""
         self.player.hand = Hand()
-        self.player.handle_split_hands = []
+        self.player.split_hands = []
         self.player.split_bets = []
         self.dealer_hand = Hand()
         self.dealer_hole_card_revealed = False
@@ -140,67 +142,6 @@ class BlackjackGame:
             and (self.player.current_bet * 2) <= self.player.credits
         )
 
-    # === Basic Strategy Hints ===
-    def format_double_hint(self, fallback_action):
-        """Return the right hint text for a recommended double-down spot."""
-        if self.can_double_down():
-            return "double"
-        return f"double if allowed, otherwise {fallback_action}"
-
-    def hint_soft_hand(self, player_total, dealer_card):
-        """Strategy hinting for soft totals with two cards."""
-        if player_total in {13, 14} and dealer_card in {5, 6}:
-            return self.format_double_hint("hit")
-        if player_total in {15, 16} and dealer_card in {4, 5, 6}:
-            return self.format_double_hint("hit")
-        if player_total == 17 and dealer_card in {3, 4, 5, 6}:
-            return self.format_double_hint("hit")
-        if player_total == 18:
-            if dealer_card in {3, 4, 5, 6}:
-                return self.format_double_hint("stand")
-            if dealer_card in {2, 7, 8}:
-                return "stand"
-            return "hit"
-        if player_total in {19, 20, 21}:
-            return "stand"
-        return "hit"
-
-    def hint_hard_hand_double(self, player_total, dealer_card):
-        """Strategy hinting for hard hand doubling with two cards."""
-        if player_total == 9 and dealer_card in {3, 4, 5, 6}:
-            return self.format_double_hint("hit")
-        if player_total == 10 and dealer_card in {2, 3, 4, 5, 6, 7, 8, 9}:
-            return self.format_double_hint("hit")
-        if player_total == 11 and dealer_card != 11:
-            return self.format_double_hint("hit")
-        return None
-
-    def hint_hard_general(self, player_total, dealer_card):
-        """Strategy hinting for general hard hand play."""
-        if player_total >= 17:
-            return "stand"
-        if player_total >= 13:
-            return "stand" if dealer_card in {2, 3, 4, 5, 6} else "hit"
-        if player_total == 12:
-            return "stand" if dealer_card in {4, 5, 6} else "hit"
-        return "hit"
-
-    def hint_action_basic_strategy(self):
-        """Return a basic-strategy hint including common double-down spots."""
-        player_total = self.player.hand.value()
-        dealer_card = self.dealer_upcard_value()
-        is_soft_total = self.player.hand.is_soft()
-
-        if is_soft_total and len(self.player.hand.cards) == 2:
-            return self.hint_soft_hand(player_total, dealer_card)
-
-        if len(self.player.hand.cards) == 2:
-            hint = self.hint_hard_hand_double(player_total, dealer_card)
-            if hint:
-                return hint
-
-        return self.hint_hard_general(player_total, dealer_card)
-
     # === Round Flow ===
     def initial_deal(self):
         """Deal the opening four cards and return any blackjack result."""
@@ -220,6 +161,10 @@ class BlackjackGame:
         self.ui.animate_deal(self.deal_card, self.player.hand, lambda: self.get_table_state("Player Hits"))
 
         if self.player.hand.is_busted():
+            if self.player.has_split():
+                self.ui.print_colored("\nHand busted.", "red", bold=True)
+                return False
+
             self.player.lost_bet(self.player.current_bet)
             self.count_dealer_hidden_card()
             self.show_result("Round Result", "Player busted! Dealer wins.", "red")
@@ -247,6 +192,10 @@ class BlackjackGame:
         )
 
         if self.player.hand.is_busted():
+            if self.player.has_split():
+                self.ui.print_colored("\nHand busted.", "red", bold=True)
+                return False
+
             self.player.lost_bet(self.player.current_bet)
             self.count_dealer_hidden_card()
             self.show_result("Round Result", "Player busted! Dealer wins.", "red")
@@ -264,7 +213,7 @@ class BlackjackGame:
 
     def handle_hint_action(self):
         """Show a basic strategy hint."""
-        hint = self.hint_action_basic_strategy()
+        hint = self.basic_strategy.hint_action_basic_strategy()
         self.ui.print_colored(
             f"\nHint: You should {hint.upper()} according to basic strategy.",
             "green",
@@ -304,9 +253,9 @@ class BlackjackGame:
 
     def handle_split_hand(self):
         """Handle splitting the player's hand when two initial cards are the same rank."""
-        self.player.handle_split_hand()
+        self.player.split_hand()
 
-        for i, hand in enumerate(self.player.handle_split_hands):
+        for i, hand in enumerate(self.player.split_hands):
             self.player.hand = hand
             self.ui.clear_screen()
             self.ui.animate_deal(
@@ -315,16 +264,18 @@ class BlackjackGame:
                 lambda i=i: self.get_table_state(f"Dealing card to Hand {i + 1}"),
             )
 
-        for i, hand in enumerate(self.player.handle_split_hands):
+        for i, hand in enumerate(self.player.split_hands):
             self.player.hand = hand
+            self.player.current_bet = self.player.split_bets[i]
             self.ui.clear_screen()
             self.ui.render_table(
-                **self.get_table_state(f">>> PLAYING HAND {i + 1} of {len(self.player.handle_split_hands)} <<<")
+                **self.get_table_state(f">>> PLAYING HAND {i + 1} of {len(self.player.split_hands)} <<<")
             )
             self.ui.print_colored(f"\n=== HAND {i + 1} ===", "cyan", bold=True)
             self.handle_player_turn()
+            self.player.split_bets[i] = self.player.current_bet
 
-        self.player.hand = self.player.handle_split_hands[0]
+        self.player.hand = self.player.split_hands[0]
 
     # === Result Display ===
     def get_result_color(self, result):
@@ -350,18 +301,18 @@ class BlackjackGame:
     def show_final_result(self):
         """Display the final hands and winner."""
         if self.player.has_split():
-            self.show_handle_split_hand_results()
+            self.show_split_hand_results()
         else:
             self.show_single_hand_result()
 
-    def show_handle_split_hand_results(self):
+    def show_split_hand_results(self):
         """Display results for each split hand."""
-        for i, hand in enumerate(self.player.handle_split_hands):
+        for i, hand in enumerate(self.player.split_hands):
             self.player.hand = hand
             hand_bet = self.player.split_bets[i]
             self.ui.clear_screen()
             self.ui.render_table(
-                **self.get_table_state(f">>> FINAL HAND {i + 1} of {len(self.player.handle_split_hands)} <<<", reveal_dealer=True)
+                **self.get_table_state(f">>> FINAL HAND {i + 1} of {len(self.player.split_hands)} <<<", reveal_dealer=True)
             )
             result = self.compare_hands()
             self.update_hand_result(result, hand_bet)
@@ -370,7 +321,7 @@ class BlackjackGame:
             result_color = self.get_result_color(result)
             self.display_result_section(f"HAND {i + 1}: {result}", result_color)
 
-        self.player.hand = self.player.handle_split_hands[0]
+        self.player.hand = self.player.split_hands[0]
 
     def show_single_hand_result(self):
         """Display result for a single non-split hand."""

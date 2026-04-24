@@ -48,12 +48,13 @@ class TerminalUI:
         print(self.colorize(text, color_key, bold))
 
     def format_amount(self, amount):
-        """Format credits and bets without trailing .0 values."""
+        """Format credits and bets with commas for large values."""
         if amount is None:
             return ""
-        if float(amount).is_integer():
-            return str(int(amount))
-        return f"{amount:.1f}"
+        value = float(amount)
+        if value.is_integer():
+            return f"{int(value):,}"
+        return f"{value:,.1f}"
 
     # === User Input ===
     def input_action(self, hand_length, can_double=False, can_split=False):
@@ -68,9 +69,9 @@ class TerminalUI:
             }
             actions = {k: v for k, v in actions.items() if v is not None}
             if can_double:
-                prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Split [4] Double [5] Hint: ", "yellow", bold=True)
+                prompt = self.colorize("\nAction:\n[1] Hit [2] Stand [3] Split [4] Double [5] Hint: ", "yellow", bold=True)
             else:
-                prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Split [4] Hint: ", "yellow", bold=True)
+                prompt = self.colorize("\nAction: \n[1] Hit [2] Stand [3] Split [4] Hint: ", "yellow", bold=True)
         elif hand_length == 2 and can_double:
             actions = {
                 "1": "hit",
@@ -78,47 +79,44 @@ class TerminalUI:
                 "3": "double",
                 "4": "hint",
             }
-            prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Double [4] Hint: ", "yellow", bold=True)
+            prompt = self.colorize("\n Choose Action:\n[1] Hit [2] Stand [3] Double [4] Hint: \n", "yellow", bold=True)
         else:
             actions = {
                 "1": "hit",
                 "2": "stand",
                 "3": "hint",
             }
-            prompt = self.colorize("\nAction:: [1] Hit [2] Stand [3] Hint: ", "yellow", bold=True)
+            prompt = self.colorize("\nChoose Action:\n[1] Hit [2] Stand [3] Hint: \n", "yellow", bold=True)
         while True:
             choice = input(prompt).strip()
             if choice in actions:
                 return actions[choice]
-            self.print_colored("Invalid input. Please enter a valid option.", "red", bold=True)
+            self.print_colored("Invalid input. Please enter a valid option. \n", "red", bold=True)
 
     def input_bet(self, available_credits):
-        """Prompt for a bet in whole- or half-credit increments."""
+        """Prompt for a whole-number bet."""
         while True:
             prompt = self.colorize(
-                f"\nEnter bet amount (available: {self.format_amount(available_credits)}): ",
+                f"\nEnter bet amount (available: {self.format_amount(available_credits)}): \n",
                 "yellow",
                 bold=True,
             )
             raw_value = input(prompt).strip()
 
             try:
-                bet_amount = float(raw_value)
+                bet_amount = int(raw_value)
             except ValueError:
-                self.print_colored("Invalid bet. Enter a whole number or a value ending in .5.", "red", bold=True)
+                self.print_colored("Invalid bet. Enter a whole number.", "red", bold=True)
                 continue
 
             if bet_amount <= 0:
                 self.print_colored("Bet must be greater than zero.", "red", bold=True)
                 continue
-            if not (bet_amount * 2).is_integer():
-                self.print_colored("Bet must be in whole- or half-credit increments.", "red", bold=True)
-                continue
             if bet_amount > available_credits:
                 self.print_colored("Bet cannot exceed available credits.", "red", bold=True)
                 continue
 
-            return int(bet_amount) if bet_amount.is_integer() else bet_amount
+            return bet_amount
 
     # === Game Rendering ===
     def render_table(
@@ -201,6 +199,33 @@ class TerminalUI:
         self.render_table(**table_state_getter())
         sys.stdout.flush()
         time.sleep(0.5)
+
+    def welcome_message(self):
+        """Display a welcome message with ASCII art."""
+        ascii_art = r"""
+    ╔══════════════════════════════════════════════════╗
+    ║                                                  ║
+    ║          Welcome to Blackjack Trainer!           ║
+    ║                                                  ║
+    ╚══════════════════════════════════════════════════╝
+        """
+        print(ascii_art)
+
+    def exit_message(self):
+        """Display a goodbye message."""
+        ascii_art = r"""
+    ╔══════════════════════════════════════════════════╗
+    ║                                                  ║
+    ║          Thanks for playing! Goodbye!            ║
+    ║                                                  ║
+    ╚══════════════════════════════════════════════════╝
+        """
+        print(ascii_art) 
+
+    def display_user_stats(self, wins, losses, ties, player):
+        """Display the player's win/loss/tie statistics."""
+      
+        self.print_colored(f"{player.name}'s Wins: {wins} | Losses: {losses} | Ties: {ties}", "yellow", bold=True)   
 
     # === Terminal Helpers ===
     def clear_screen(self):
