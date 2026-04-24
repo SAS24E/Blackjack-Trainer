@@ -1,12 +1,13 @@
 import json
 from hand import Hand
 
+
 class Player:
     """Represents a blackjack player with a hand, credits, and statistics."""
-    
+
     def __init__(self, name):
         self.name = name.strip()  # Player's name for display purposes
-        self.hand = Hand() # The player's current hand of cards
+        self.hand = Hand()  # The player's current hand of cards
         self.credits = 1000  # Starting credits for betting
         self.wins = 0
         self.losses = 0
@@ -15,7 +16,7 @@ class Player:
         self.file_name = f"{self.name}_data.txt"  # File to save/load player data
         self.split_hands = []  # Track split hands if the player chooses to split
         self.split_bets = []  # Track bets for split hands
-        
+
     def split_hand(self):
         """Split the player's hand into two hands if possible."""
         if len(self.hand.cards) == 2 and self.hand.cards[0].rank == self.hand.cards[1].rank:
@@ -43,7 +44,6 @@ class Player:
             raise ValueError("Insufficient credits.")
         self.credits -= amount
 
-
     def won_bet(self, amount):
         """Handle winning a bet."""
         self.add_credit(amount)
@@ -66,35 +66,38 @@ class Player:
             raise ValueError("Bet amount must be greater than zero.")
         self.current_bet = amount
         return self.current_bet
-    
+
     def load_from_file(self, filename):
-        """Load player data from a file"""
+        """Load player data from a file."""
         try:
-            with open(filename, 'r') as file:
+            with open(filename, "r") as file:
                 data = json.load(file)
-                self.name = data.get('name', self.name)
-                self.credits = data.get('credits', self.credits)
-                self.wins = data.get('wins', self.wins)
-                self.losses = data.get('losses', self.losses)
-                self.ties = data.get('ties', self.ties)
+                self.name = data.get("name", self.name)
+                self.credits = data.get("credits", self.credits)
+                self.wins = data.get("wins", self.wins)
+                self.losses = data.get("losses", self.losses)
+                self.ties = data.get("ties", self.ties)
         except FileNotFoundError:
             print(f"No save file found for {self.name}. Starting with default values.")
 
-
     def save_to_file(self, filename):
-        """Save player data to a file"""
+        """Save player data to a file."""
         try:
-            with open(filename, 'w') as file:
-                json.dump({
-                    'name': self.name,
-                    'credits': self.credits,
-                    'wins': self.wins,
-                    'losses': self.losses,
-                    'ties': self.ties
-                    }, file, indent=4)
+            with open(filename, "w") as file:
+                json.dump(
+                    {
+                        "name": self.name,
+                        "credits": self.credits,
+                        "wins": self.wins,
+                        "losses": self.losses,
+                        "ties": self.ties,
+                    },
+                    file,
+                    indent=4,
+                )
         except IOError as e:
             print(f"Error saving player data: {e}")
-    
+
     def has_split(self):
         return len(self.split_hands) > 0
 

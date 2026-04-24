@@ -3,7 +3,8 @@ import subprocess
 import sys
 import time
 
-class Display:
+
+class TerminalUI:
     """Terminal rendering and input helpers."""
 
     # === Constants ===
@@ -27,9 +28,9 @@ class Display:
 
     # === Initialization ===
     def __init__(self):
-        self.use_color = self._enable_ansi_colors()
+        self.use_color = self.enable_ansi_colors()
 
-    def _enable_ansi_colors(self):
+    def enable_ansi_colors(self):
         if os.name == "nt":
             os.system("")
         return sys.stdout.isatty()
@@ -119,15 +120,15 @@ class Display:
 
             return int(bet_amount) if bet_amount.is_integer() else bet_amount
 
-    # === Game Display ===
-    def display_table(
+    # === Game Rendering ===
+    def render_table(
         self,
         title,
         player_hand,
         dealer_hand,
         reveal_dealer=False,
         running_count=0,
-        dealer_visible_value=0,
+        dealer_upcard_value=0,
         player_credits=None,
     ):
         """Render the current table state."""
@@ -139,19 +140,19 @@ class Display:
         self.print_colored(f"Running Count: {running_count}", "cyan", bold=True)
 
         self.print_colored("Dealer:", "magenta", bold=True)
-        self.display_graphical_hand(dealer_hand, hide_dealer_card=not reveal_dealer)
+        self.render_graphical_hand(dealer_hand, hide_dealer_card=not reveal_dealer)
         if reveal_dealer:
             self.print_colored(f"\nDealer total: {dealer_hand.value()}", "yellow", bold=True)
         else:
-            self.print_colored(f"\nDealer showing: {dealer_visible_value}", "yellow", bold=True)
+            self.print_colored(f"\nDealer showing: {dealer_upcard_value}", "yellow", bold=True)
 
         self.print_colored("\nPlayer:", "green", bold=True)
-        self.display_graphical_hand(player_hand)
+        self.render_graphical_hand(player_hand)
         self.print_colored(f"\nPlayer total: {player_hand.value()}", "yellow", bold=True)
-        self.display_credits(player_credits)
+        self.render_credits(player_credits)
         self.print_divider()
 
-    def display_graphical_hand(self, hand, hide_dealer_card=False):
+    def render_graphical_hand(self, hand, hide_dealer_card=False):
         """Render a hand as ASCII playing cards."""
         card_height = 7
         card_lines = [[] for _ in range(card_height)]
@@ -187,7 +188,7 @@ class Display:
         for line in card_lines:
             print("  ".join(line))
 
-    def display_credits(self, credits=None):
+    def render_credits(self, credits=None):
         """Display credits when provided by the game state."""
         if credits is None:
             return
@@ -197,7 +198,7 @@ class Display:
         """Deal a card and render the updated table as one animation frame."""
         deal_card_func(hand)
         self.clear_screen()
-        self.display_table(**table_state_getter())
+        self.render_table(**table_state_getter())
         sys.stdout.flush()
         time.sleep(0.5)
 

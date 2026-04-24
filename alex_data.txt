@@ -1,7 +1,7 @@
 {
     "name": "alex",
-    "credits": 21626.5,
-    "wins": 168,
+    "credits": 21726.5,
+    "wins": 169,
     "losses": 216,
     "ties": 22
 }
