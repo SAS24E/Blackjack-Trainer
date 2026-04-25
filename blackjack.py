@@ -67,7 +67,7 @@ class BlackjackGame:
         self.dealer_hand = Hand()
         self.dealer_hole_card_revealed = False
 
-    def get_table_state(self, title, reveal_dealer=False):
+    def get_table_state(self, title, reveal_dealer=False, current_bet=None):
         """Return the current state needed by the UI layer."""
         return {
             "title": title,
@@ -76,6 +76,7 @@ class BlackjackGame:
             "reveal_dealer": reveal_dealer,
             "running_count": self.running_count,
             "dealer_upcard_value": self.dealer_upcard_value(),
+            "current_bet": self.player.current_bet if current_bet is None else current_bet,
             "player_credits": self.player.credits,
         }
 
@@ -276,6 +277,7 @@ class BlackjackGame:
             self.player.split_bets[i] = self.player.current_bet
 
         self.player.hand = self.player.split_hands[0]
+        self.player.current_bet = self.player.split_bets[0]
 
     # === Result Display ===
     def get_result_color(self, result):
@@ -312,7 +314,11 @@ class BlackjackGame:
             hand_bet = self.player.split_bets[i]
             self.ui.clear_screen()
             self.ui.render_table(
-                **self.get_table_state(f">>> FINAL HAND {i + 1} of {len(self.player.split_hands)} <<<", reveal_dealer=True)
+                **self.get_table_state(
+                    f">>> FINAL HAND {i + 1} of {len(self.player.split_hands)} <<<",
+                    reveal_dealer=True,
+                    current_bet=hand_bet,
+                )
             )
             result = self.compare_hands()
             self.update_hand_result(result, hand_bet)

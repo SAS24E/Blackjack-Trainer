@@ -1,7 +1,0 @@
-{
-    "name": "test",
-    "credits": 1010,
-    "wins": 1,
-    "losses": 0,
-    "ties": 0
-}

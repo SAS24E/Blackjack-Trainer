@@ -127,6 +127,7 @@ class TerminalUI:
         reveal_dealer=False,
         running_count=0,
         dealer_upcard_value=0,
+        current_bet=None,
         player_credits=None,
     ):
         """Render the current table state."""
@@ -147,6 +148,7 @@ class TerminalUI:
         self.print_colored("\nPlayer:", "green", bold=True)
         self.render_graphical_hand(player_hand)
         self.print_colored(f"\nPlayer total: {player_hand.value()}", "yellow", bold=True)
+        self.render_bet(current_bet)
         self.render_credits(player_credits)
         self.print_divider()
 
@@ -191,6 +193,12 @@ class TerminalUI:
         if credits is None:
             return
         self.print_colored(f"Credits: {self.format_amount(credits)}", "green", bold=True)
+
+    def render_bet(self, bet=None):
+        """Display the current bet when provided by the game state."""
+        if bet is None:
+            return
+        self.print_colored(f"Current bet: {self.format_amount(bet)}", "yellow", bold=True)
 
     def animate_deal(self, deal_card_func, hand, table_state_getter):
         """Deal a card and render the updated table as one animation frame."""
