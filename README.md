@@ -72,6 +72,6 @@ blackjack-trainer/
 
 ## Author
 
-Stephen Secor
+Alex Secor
 
-Built as a final project for CIS4930 - Python Course at Florida State University.
+
